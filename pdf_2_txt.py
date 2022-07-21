@@ -3,7 +3,8 @@ import pdfplumber
 import os
 import logging
 import datetime
-
+import time
+from multiprocessing import Pool
 
 logger = logging.getLogger(name='r')  # 不加名称设置root logger
 logger.setLevel(logging.DEBUG)
@@ -40,21 +41,42 @@ def extract_content(pdf_path, txt_path):
     logger.info("{}生成成功".format(txt_path))
 
 
-if __name__ == '__main__':
+def pdf_2_txt(file_name):
     # extract_content(r'test_pdf/2-万科A-2007年年度报告.pdf', "temp.txt")
-    begin = datetime.datetime.now()
-    logger.info("begin")
+    # begin = datetime.datetime.now()
+    # logger.info("begin")
 
-    for f in os.listdir(r'test_pdf'):  # listdir返回文件中所有目录
-        stem, suffix = os.path.splitext(f)
-        txt_file_name = r'result_txt/{}.txt'.format(stem)
-        if os.path.lexists(txt_file_name):
-            logger.info("{}已存在".format(txt_file_name))
-            continue
-        extract_content(r'test_pdf/{}'.format(f), txt_file_name)
-        # print(stem, suffix)
+    stem, suffix = os.path.splitext(file_name)
+    txt_file_name = r'result_txt/{}.txt'.format(stem)
+    if os.path.lexists(txt_file_name):
+        logger.info("{}已存在".format(txt_file_name))
+        return
+    extract_content(r'test_pdf/{}'.format(file_name), txt_file_name)
 
-    end = datetime.datetime.now()
-    logger.info("end")
 
-    logger.info("耗时共{}".format(end - begin))
+    # end = datetime.datetime.now()
+    # logger.info("end")
+    # logger.info("耗时共{}".format(end - begin))
+
+
+def run__pool():  # main process
+
+    cpu_worker_num = 10
+    # process_args = os.listdir(r'test_pdf')
+
+    # print(f'| inputs:  {process_args}')
+    start_time = datetime.datetime.now()
+    with Pool(cpu_worker_num) as p:
+        outputs = p.map(pdf_2_txt, os.listdir(r'test_pdf'))
+    print(f'| outputs: {outputs}  \n  TimeUsed: {datetime.datetime.now() - start_time}    \n')
+
+    '''Another way (I don't recommend)
+    Using 'functions.partial'. See https://stackoverflow.com/a/25553970/9293137
+    from functools import partial
+    # from functools import partial
+    # pool.map(partial(f, a, b), iterable)
+    '''
+
+
+if __name__ == '__main__':
+    run__pool()
